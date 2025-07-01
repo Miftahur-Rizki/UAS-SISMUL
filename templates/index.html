@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Kompresi & Steganografi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <header class="bg-white shadow sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold text-indigo-600">Kompresi & Steganografi</h1>
+      <nav class="space-x-4">
+        <a href="#upload" class="text-gray-700 hover:text-indigo-600">Upload</a>
+        <a href="#reveal" class="text-gray-700 hover:text-indigo-600">Reveal</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="text-center py-12 bg-indigo-50">
+    <h2 class="text-3xl font-bold text-indigo-700">📦 Kompresi & 🔐 Steganografi</h2>
+    <p class="mt-4 text-gray-600 max-w-2xl mx-auto">Aplikasi web untuk kompresi gambar, audio, video, dan menyisipkan pesan rahasia ke dalam gambar.</p>
+  </section>
+
+  <section id="upload" class="max-w-3xl mx-auto bg-white rounded-lg shadow p-8 mt-8">
+    <h3 class="text-2xl font-semibold text-indigo-600 mb-4">Upload & Kompresi File</h3>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <label class="block w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer">
+        <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0l-4 4m4-4l4 4m1 4h8m-8 0l4 4m-4-4l-4 4" />
+        </svg>
+        <p class="text-gray-500 mt-2">Klik atau seret file ke sini</p>
+        <input id="file" name="file" type="file" class="hidden" required />
+      </label>
+
+      <label class="block mt-6 text-sm font-medium text-gray-700">Jenis Media</label>
+      <select name="type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        <option value="image">Gambar (JPG/PNG)</option>
+        <option value="audio">Audio (MP3)</option>
+        <option value="video">Video (MP4)</option>
+      </select>
+
+      <label class="block mt-4 text-sm font-medium text-gray-700">Pesan Rahasia (opsional)</label>
+      <input name="message" type="text" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Tulis pesan untuk disisipkan dalam gambar...">
+
+      <button type="submit" class="mt-6 w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition">🚀 Kompres Sekarang</button>
+    </form>
+  </section>
+
+  <section id="reveal" class="max-w-3xl mx-auto bg-white rounded-lg shadow p-8 mt-10">
+    <h3 class="text-2xl font-semibold text-green-600 mb-4">🔍 Ungkap Pesan dari Gambar</h3>
+    <form action="/reveal_stego" method="POST" enctype="multipart/form-data">
+      <label class="block text-sm font-medium text-gray-700">Pilih Gambar Stego</label>
+      <input type="file" name="stego_file" class="mt-2 block w-full border-gray-300 rounded-md shadow-sm" required>
+      <button type="submit" class="mt-6 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition">🔎 Deteksi Pesan</button>
+    </form>
+  </section>
+
+  <footer class="text-center text-sm text-gray-500 mt-12 py-4">&copy; 2025 Kompresi & Steganografi App</footer>
+</body>
+</html>

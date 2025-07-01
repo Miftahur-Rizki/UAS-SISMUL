@@ -1,0 +1,49 @@
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hasil Kompresi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-3xl mx-auto py-12 px-4">
+    <h2 class="text-3xl font-bold text-center text-green-600 mb-6">✅ Kompresi Berhasil</h2>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="text-xl font-semibold text-gray-700 mb-4">Preview</h3>
+      {% if filetype == 'image' %}
+        <img src="{{ url_for('static', filename='uploads/' + filename) }}" class="rounded mx-auto">
+      {% elif filetype == 'video' %}
+        <video controls class="rounded w-full max-h-96">
+          <source src="{{ url_for('static', filename='uploads/' + filename) }}">
+        </video>
+      {% elif filetype == 'audio' %}
+        <audio controls class="w-full">
+          <source src="{{ url_for('static', filename='uploads/' + filename) }}">
+        </audio>
+      {% endif %}
+    </div>
+
+    <div class="mt-6 bg-white rounded-lg shadow p-6">
+      <h3 class="text-xl font-semibold mb-4 text-gray-700">Ukuran File</h3>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Awal:</span>
+        <span>{{ original_size }} KB</span>
+      </div>
+      <div class="flex justify-between mt-2">
+        <span class="text-gray-600">Setelah Kompresi:</span>
+        <span class="text-green-600 font-bold">{{ compressed_size }} KB</span>
+      </div>
+      <div class="mt-4 w-full bg-gray-200 rounded-full h-3">
+        <div class="bg-green-500 h-3 rounded-full" style="width: {{ compression_ratio|default(0)|float }}%"></div>
+      </div>
+      <p class="text-sm text-gray-500 mt-2">Efisiensi: {{ compression_ratio }}%</p>
+    </div>
+
+    <div class="mt-6 flex flex-col md:flex-row gap-4 justify-center">
+      <a href="/download/{{ filename }}" class="bg-indigo-600 text-white px-6 py-3 rounded-md text-center hover:bg-indigo-700">⬇️ Unduh Hasil</a>
+      <a href="/" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-md text-center hover:bg-gray-400">🔙 Kembali</a>
+    </div>
+  </div>
+</body>
+</html>
