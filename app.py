@@ -1,16 +1,63 @@
-from flask import Flask, render_template, request, send_from_directory, redirect, url_for, session
+from flask import Flask, render_template, request, send_from_directory
 import os
 import subprocess
-from stegano import lsb
+from PIL import Image
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'devsecret')
 
-# Folder Upload dan Output
 UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'output'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# =========================
+# LSB STEGANOGRAFI (MANUAL)
+# =========================
+
+def lsb_hide(image_path, message, output_path):
+    img = Image.open(image_path)
+    encoded = img.copy()
+    width, height = img.size
+    message += chr(0)  # Akhiri pesan dengan karakter NULL
+    
+    data_index = 0
+    binary_message = ''.join([format(ord(char), '08b') for char in message])
+
+    for y in range(height):
+        for x in range(width):
+            if data_index < len(binary_message):
+                pixel = list(img.getpixel((x, y)))
+                for i in range(3):  # R, G, B
+                    if data_index < len(binary_message):
+                        pixel[i] = pixel[i] & ~1 | int(binary_message[data_index])
+                        data_index += 1
+                encoded.putpixel((x, y), tuple(pixel))
+            else:
+                encoded.save(output_path)
+                return
+
+def lsb_reveal(image_path):
+    img = Image.open(image_path)
+    width, height = img.size
+    binary_message = ''
+    
+    for y in range(height):
+        for x in range(width):
+            pixel = img.getpixel((x, y))
+            for i in range(3):
+                binary_message += str(pixel[i] & 1)
+    
+    chars = [binary_message[i:i+8] for i in range(0, len(binary_message), 8)]
+    message = ''
+    for c in chars:
+        if c == '00000000':  # NULL char
+            break
+        message += chr(int(c, 2))
+    return message
+
+# ============================
+# ROUTING FLASK
+# ============================
 
 @app.route('/')
 def index():
@@ -32,13 +79,13 @@ def upload():
     output_filename = f"compressed_{filename}"
     output_path = os.path.join(OUTPUT_FOLDER, output_filename)
 
-    # Kompresi berdasarkan media type
+    # Kompresi dan steganografi berdasarkan jenis media
     if media_type == 'image':
         subprocess.run(['ffmpeg', '-i', upload_path, '-vf', 'scale=iw/2:ih/2', output_path])
         if secret_message:
             stego_filename = f"stego_{filename}"
             stego_output = os.path.join(OUTPUT_FOLDER, stego_filename)
-            lsb.hide(output_path, secret_message).save(stego_output)
+            lsb_hide(output_path, secret_message, stego_output)
             output_filename = stego_filename
     elif media_type == 'audio':
         subprocess.run(['ffmpeg', '-i', upload_path, '-b:a', '128k', output_path])
@@ -47,28 +94,12 @@ def upload():
     else:
         return "Tipe media tidak dikenali."
 
-    # Simpan info hasil ke session
-    session['result_file'] = output_filename
-    session['filetype'] = media_type
-    session['original_size'] = round(os.path.getsize(upload_path) / 1024, 2)
-    session['compressed_size'] = round(os.path.getsize(os.path.join(OUTPUT_FOLDER, output_filename)) / 1024, 2)
-
-    return redirect(url_for('result'))
-
-@app.route('/result')
-def result():
-    filename = session.get('result_file')
-    original_size = session.get('original_size', 0)
-    compressed_size = session.get('compressed_size', 0)
-    filetype = session.get('filetype', '')
-    compression_ratio = round(100 * compressed_size / original_size, 2) if original_size else 0
-
     return render_template('result.html',
-                           filename=filename,
-                           original_size=original_size,
-                           compressed_size=compressed_size,
-                           compression_ratio=compression_ratio,
-                           filetype=filetype)
+                           filename=output_filename,
+                           filetype=media_type,
+                           original_size=round(os.path.getsize(upload_path) / 1024, 2),
+                           compressed_size=round(os.path.getsize(os.path.join(OUTPUT_FOLDER, output_filename)) / 1024, 2),
+                           compression_ratio=round(100 * os.path.getsize(os.path.join(OUTPUT_FOLDER, output_filename)) / os.path.getsize(upload_path), 2))
 
 @app.route('/download/<filename>')
 def download_file(filename):
@@ -84,16 +115,11 @@ def reveal_from_upload():
     file.save(filepath)
 
     try:
-        message = lsb.reveal(filepath)
+        message = lsb_reveal(filepath)
         return render_template('reveal.html', message=message)
     except:
         return render_template('reveal.html', message=None)
 
-# Untuk favicon (opsional)
-@app.route('/favicon.ico')
-def favicon():
-    return '', 204
-
-# Run Flask untuk Railway/Render
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+# Run
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
